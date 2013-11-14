@@ -1,0 +1,11 @@
+div.drag-to-upload {
+	border: 5px dashed grey;
+	border-radius: 10px;
+	display: inline-block;
+	padding: 0px 10px 0px 10px
+}
+
+div.dz-message {
+	font-size: 20px;
+	line-height: 100px;
+}
