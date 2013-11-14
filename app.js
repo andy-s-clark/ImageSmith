@@ -34,7 +34,8 @@ if ('development' == app.get('env')) {
 
 /* routing */
 app.get('/', routes.index);
-app.get('/images/:bucket/:id', image.list);
+app.get('/images/:bucket/:id.json', image.list);
+app.get('/images/:bucket/:id/:image', image.get);
 app.get('/upload/image', image.upload);
 
 app.post('/images/:bucket/:id', image.post);
