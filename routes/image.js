@@ -29,6 +29,51 @@ exports.list = function (req, res) {
 	});
 };
 
+/**
+ * GET image
+ * @TODO sanitize inputs! (ex. rw)
+ */
+exports.get = function(req, res) {
+	var fs = require('fs'),
+		mediaDir = req.app.get('media'),
+		mime = require('mime');
+
+	var bucket = req.param('bucket'),
+		id = req.param('id'),
+		image = req.param('image'),
+		rw = req.query.rw,
+		rh = req.query.rh;
+
+	var i = image.lastIndexOf('.');
+	if ( i > 0 ) {
+		var fileName = image.substr(0, i);
+		var fileExt = image.substr(i + 1);
+	} else {
+		var fileName = image;
+		var fileExt = '';
+	}
+
+	var subdir = 'flat';
+	if ( rw ) {
+		subdir = 'resized';
+		fileName += '_w'+parseInt(rw);
+	}
+	if ( rh ) {
+		subdir = 'resized';
+		fileName += '_h'+parseInt(rh);
+	}
+	var path = mediaDir + '/' + bucket + '/' + id + '/' + subdir + '/' + fileName + (fileExt.length>0 ? '.' + fileExt : '');
+	if ( fs.readFile(path, function(err, data) {
+		if (err) {
+			// TODO Create resized image
+			res.send(404, 'The file "'+path+'" has yet to be created');
+		} else {
+			res.header('Content-Type', mime.lookup(path));
+			res.send(data);
+		}
+	}));
+}
+
 /*
  * POST new image
  */
