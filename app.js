@@ -31,7 +31,7 @@ if ('development' == app.get('env')) {
 }
 
 app.get('/', routes.index);
-app.get('/images/:bucket/:id', image.list);
+app.get('/images/:bucket/:id.json', image.list);
 app.get('/upload/image', image.upload);
 
 http.createServer(app).listen(app.get('port'), function(){
