@@ -43,17 +43,9 @@ exports.post = function(req, res) {
 
 	mediaDir = mediaDir + '/' + bucket + '/' + id;
 
-	var gm = require('gm');
-	var im = gm.subClass({ imageMagick: true });
+	resizeImage('/Users/g_lawson/Pictures/bender.jpg', 100, 100, mediaDir + '/test.jpg');
 
-	im('/Users/g_lawson/Pictures/bender.jpg')
-	.resize(100, 100)
-	.autoOrient()
-	.write(mediaDir + '/test.jpg', function (err) {
-		if (!err) console.log(' hooray! ');
-	});
-
-
+	res.send(mediaDir + '/test.jpg');
 };
 
 exports.index = function(request, response){
@@ -63,3 +55,30 @@ exports.index = function(request, response){
 exports.upload = function(request, response){
 	response.render('upload', { title: 'Upload Here'});
 };
+
+var checkPath = function (bucket, id) {
+
+
+
+};
+
+var resizeImage = function (imagePath, width, height, resultPath) {
+	// base resizing command: -strip -resize [w]x[h]^ -gravity center -crop [w]x[h]+0+0
+
+	var gm = require('gm');
+	var im = gm.subClass({ imageMagick: true });
+
+	im(imagePath)
+		.strip()
+		.resize(width, height, '^')
+		.gravity('Center')
+		.crop(width, height)
+		.write(resultPath, function (err) {
+			if (err) {
+				console.log('image.resizeImage: ' + err);
+				return false;
+			};
+		});
+};
+
+

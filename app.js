@@ -34,6 +34,8 @@ app.get('/', routes.index);
 app.get('/images/:bucket/:id', image.list);
 app.get('/upload/image', image.upload);
 
+app.post('/images/:bucket/:id', image.post);
+
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
 });
