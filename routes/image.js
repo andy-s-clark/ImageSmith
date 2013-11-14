@@ -13,19 +13,23 @@ exports.list = function (req, res) {
 	mediaDir = mediaDir + '/' + bucket + '/' + id + '/orig';
 
 	fs.readdir(mediaDir, function (err, list) {
-		var files = [];
+		if ( err ) {
+			res.send(404, err);
+		} else {
+			var files = [];
 
-		if (list) {
-			for(var i = 0; i < list.length; i++) {
-				var file = list[i];
-				var stat = fs.statSync(mediaDir + '/' + file);
-				var path = '/media/' + bucket + '/' + id + '/' + file;
+			if (list) {
+				for(var i = 0; i < list.length; i++) {
+					var file = list[i];
+					var stat = fs.statSync(mediaDir + '/' + file);
+					var path = '/media/' + bucket + '/' + id + '/' + file;
 
-				if (stat.isFile() ) files.push(file);
+					if (stat.isFile() ) files.push(file);
+				};
 			};
-		};
 
-		res.json( { bucket: bucket, id: id, files: files, error: err });
+			res.json( { bucket: bucket, id: id, files: files });
+		}
 	});
 };
 
