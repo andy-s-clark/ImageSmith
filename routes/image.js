@@ -61,5 +61,5 @@ exports.index = function(request, response){
 };
 
 exports.upload = function(request, response){
-	response.render('upload', { title: 'Upload Here'});
+	response.render('upload', { title: 'Upload Image(s)', scripts:['dropzone.js']});
 };
