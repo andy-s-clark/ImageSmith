@@ -1,0 +1,12 @@
+extends layout
+
+block content
+	h2= title
+	h3= 'bucket ' + bucket + ', id ' + id
+
+	if files
+		ul
+		each file in files
+			li=file
+	else
+		p=error
