@@ -19,6 +19,8 @@ Node Image Engine
 `node app.js`
 
 ##Usage
+### Get list of images
+* http://host/images/bucket/id.json
 
 ### Get image
 * http://host/images/bucket/id/img1.jpg _(flat)_
