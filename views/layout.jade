@@ -3,6 +3,12 @@ html
 	head
 		title= 'ImageSmith - ' + title
 		link(rel='stylesheet', href='/stylesheets/style.css')
+		if styles
+			each style in styles
+				link(rel='stylesheet', href= '/stylesheets/' + style)
+		if scripts
+			each script in scripts
+				script(type='text/javascript', src= '/scripts/' + script)
 	body
 		h1 ImageSmith
 		block content

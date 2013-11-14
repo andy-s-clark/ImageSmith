@@ -24,12 +24,15 @@ app.use(express.methodOverride());
 app.use(app.router);
 app.use(express.static(path.join(__dirname, 'media')));
 app.use(express.static(path.join(__dirname, 'public')));
+/* expose dropzone */
+app.use('/dropzone', express.static(__dirname + '/node_modules/dropzone/lib'));
 
 // development only
 if ('development' == app.get('env')) {
   app.use(express.errorHandler());
 }
 
+/* routing */
 app.get('/', routes.index);
 app.get('/images/:bucket/:id', image.list);
 app.get('/upload/image', image.upload);
