@@ -3,12 +3,15 @@ ImageSmith
 
 Node Image Engine
 
-Pre-Reqs:
-# node
-# npm
-# imageMagick
-# https://toolbelt.heroku.com/
+##Pre-Reqs:
+1. node
+1. npm
+1. imageMagick
+1. https://toolbelt.heroku.com/
 
-To run:
+##Setup:
 
-foreman start
+`npm install`
+
+##To run:
+`foreman start`
