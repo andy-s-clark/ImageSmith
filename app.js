@@ -31,17 +31,19 @@ app.use('/dropzone', express.static(__dirname + '/node_modules/dropzone/lib'));
 
 // development only
 if ('development' == app.get('env')) {
-  app.use(express.errorHandler());
+	app.use(express.errorHandler());
 }
 
 /* routing */
 app.get('/', routes.index);
+
 app.get('/images/:bucket/:id.json', image.list);
 app.get('/images/:bucket/:id/:image', image.get);
-app.get('/upload/image', image.drop);
+app.get('/images/:bucket/:id/:width/:height/:image', image.get);
 
-app.post('/images/:bucket/:id', image.upload);
+app.get('/images/upload', image.drop);
+app.post('/images/upload', image.upload);
 
 http.createServer(app).listen(app.get('port'), function(){
-  console.log('Express server listening on port ' + app.get('port'));
+	console.log('Express server listening on port ' + app.get('port'));
 });
