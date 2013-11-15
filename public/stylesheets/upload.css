@@ -23,17 +23,17 @@
 	width: auto;
 	text-align: center;
 	line-height: normal;
-	user-select: none;
+
 }
 
 .heading {
 	width: 870px;
 	background-color: #f1f1f1;
 	background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #f7f7f7), color-stop(100%, #f1f1f1));
-	background-image: -webkit-linear-gradient(top, #f7f7f7,#f1f1f1);
+	background-image: -webkit-lottoinear-gradient(top, #f7f7f7,#f1f1f1);
 	background-image: -moz-linear-gradient(top, #f7f7f7,#f1f1f1);
 	background-image: linear-gradient(top, #f7f7f7,#f1f1f1);
-	border-bottom: 1px solid #dedede;
+	border: 1px solid #dedede;
 	font-size: 13px;
 	font-weight: 500;
 	margin: 0;
@@ -81,7 +81,7 @@ div.drag-to-upload {
 
 .dropzone>img {
 	padding: 19px 30px 19px 0px;
-	margin-left: 240px;
+	margin-left: 220px;
 }
 
 h1 {
@@ -92,6 +92,5 @@ h1 {
 
 span.tree {
 	font-size: 12px;
-	float: right;
 }
 

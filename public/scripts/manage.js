@@ -11,7 +11,21 @@ function displayImages()
 	$.getJSON(basePath+'.json', function(data){
 		/* add thumbnail of each file */
 		$.each(data.files, function(index, item){
-			$('<img width="75" height="75" src="'+basePath+'/'+item+'">').appendTo("#existing-files");
+			var thumbnail = $('<div />', {
+				class: "thumbnail"
+			}),
+				fileName = basePath+'/'+item.filename,
+				baseUrl = window.location.protocol + "://" + window.location.host;
+
+			thumbnail.append($('<img width="75" height="75"/>', {
+				src: fileName+'?w=75&h=75'
+			}));
+
+			thumbnail.append($('<input />', {type: "text", size: 30, value: baseUrl+fileName}));
+
+			thumbnail.append($('<span />', {class: "file-size", text:(item.stats.size/1024).toFixed(2) + "KB"}));
+
+			thumbnail.appendTo("#existing-files");
 		});
 	})
 }
