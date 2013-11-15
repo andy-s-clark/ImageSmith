@@ -110,12 +110,22 @@ exports.drop = function(request, response){
 	response.render('drop', { title: 'Upload Image(s)', scripts:['zepto.min.js', 'dropzone.js', 'upload.js'], styles: ['upload.css']});
 };
 
+exports.manage = function(request, response){
+	response.render('manage', {
+		title: 'Manage ' + request.params.bucket + "/" + request.params.id,
+		scripts:['dropzone.js'],
+		styles: ['upload.css'],
+		bucket: request.params.bucket,
+		id: request.params.id
+	});
+}
+
 exports.upload = function(request, response){
 	var gm = require('gm');
 	var im = gm.subClass({ imageMagick: true });
 	var fs = require('fs');
-	var bucket = request.body.bucket;
-	var id = request.body.id;
+	var bucket = request.params.bucket ? request.params.bucket : request.body.bucket;
+	var id = request.params.id ? request.params.id : request.body.id;
 
 	fs.readFile(request.files.file.path, function (err, data) {
 		if (err) {

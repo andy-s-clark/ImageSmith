@@ -38,6 +38,8 @@ if ('development' == app.get('env')) {
 app.get('/', routes.index);
 
 app.get('/images/:bucket/:id.json', image.list);
+app.get('/images/:bucket/:id', image.manage);
+app.post('/images/:bucket/:id', image.upload);
 app.get('/images/:bucket/:id/:image', image.get);
 app.get('/images/:bucket/:id/:width/:height/:image', image.get);
 
