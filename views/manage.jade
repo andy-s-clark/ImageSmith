@@ -3,10 +3,11 @@ extends layout
 block content
 	h1= title
 	div.drag-to-upload
-		form(id='imgDropzone', class='dropzone', action='/images/' + bucket + "/" + id)
+		form(id='imgDropzone', class='dropzone', action='/images/' + dataLayer.bucket + "/" + dataLayer.id)
 			h1.dz-message Drag Image(s) Here
 	h2 Existing Files
 	hr
+	div#existing-files
 
 
 

@@ -6,6 +6,9 @@ html
 		if styles
 			each style in styles
 				link(rel='stylesheet', href= '/stylesheets/' + style)
+		//dataLayer
+		script.
+			window.dataLayer = !{JSON.stringify(dataLayer)};
 		if scripts
 			each script in scripts
 				script(type='text/javascript', src= '/scripts/' + script)

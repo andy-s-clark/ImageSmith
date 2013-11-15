@@ -116,12 +116,13 @@ exports.drop = function(request, response){
 };
 
 exports.manage = function(request, response){
+	var dataLayer = { bucket: request.params.bucket, id: request.params.id };
+
 	response.render('manage', {
 		title: 'Manage ' + request.params.bucket + "/" + request.params.id,
-		scripts:['dropzone.js'],
+		scripts:['dropzone.js', "zepto.min.js", "manage.js"],
 		styles: ['upload.css'],
-		bucket: request.params.bucket,
-		id: request.params.id
+		dataLayer: dataLayer
 	});
 }
 
