@@ -6,7 +6,7 @@ block content
 		span.tree= title
 	div#dnd-content
 		div.drag-to-upload
-			form(id='imgDropzone', class='dropzone', action='/images/' + dataLayer.bucket + "/" + id)
+			form(id='imgDropzone', class='dropzone', action='/images/' + dataLayer.bucket + "/" + dataLayer.id)
 				img(src="http://build.com/mediabase/Site/Build.com/images/_uxfiles/image-icon.jpg")
 				div.dz-message Drag Image(s) Here or Click to Choose
 		h2 Existing Files
