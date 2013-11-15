@@ -1,0 +1,6 @@
+extends layout
+
+block content
+  h1= title
+  div.drag-to-upload
+    form(action="/images/test/123" class="dropzone" method="post" enctype='multipart/form-data')
