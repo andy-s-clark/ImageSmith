@@ -15,7 +15,7 @@ exports.list = function (request, response) {
 		if (err) {
 			response.send(404, err);
 		} else {
-			var files = [];
+			var files = {};
 
 			if (list) {
 				for(var i = 0; i < list.length; i++) {
@@ -23,7 +23,18 @@ exports.list = function (request, response) {
 					var stat = fs.statSync(mediaDir + '/' + file);
 					var path = '/media/' + bucket + '/' + id + '/' + file;
 
-					if (stat.isFile() ) files.push(file);
+					if (stat.isFile() ) {
+
+						files[file] = {
+							filename: file,
+							stats: {
+								size: stat.size,
+								atime: stat.atime,
+								mtime: stat.mtime,
+								ctime: stat.ctime
+							}
+						};
+					}
 				};
 			};
 
