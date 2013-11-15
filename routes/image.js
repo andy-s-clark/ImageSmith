@@ -81,19 +81,18 @@ exports.get = function(req, res) {
 /*
  * POST new image
  */
-
 exports.post = function(req, res) {
 	var fs = require('fs');
 	var mediaDir = req.app.get('media');
-
 	var bucket = req.param('bucket');
 	var id = req.param('id');
 
-	mediaDir = mediaDir + '/' + bucket + '/' + id;
+	var check = checkPath(mediaDir, bucket, id);
+	console.log('passed checkPath: ' + check);
 
-	resizeImage('/Users/g_lawson/Pictures/bender.jpg', 100, 100, mediaDir + '/test.jpg');
 
-	res.send(mediaDir + '/test.jpg');
+
+	res.send('success');
 };
 
 exports.index = function(request, response){
@@ -117,10 +116,30 @@ exports.upload = function(request, response){
 	});
 };
 
-var checkPath = function (bucket, id) {
+var checkPath = function (mediaDir, bucket, id) {
+	var fs = require('fs');
 
+	return (
+		createDir(mediaDir + '/' + bucket) &&
+		createDir(mediaDir + '/' + bucket + '/' + id) &&
+		createDir(mediaDir + '/' + bucket + '/' + id + '/orig') &&
+		createDir(mediaDir + '/' + bucket + '/' + id + '/flat') &&
+		createDir(mediaDir + '/' + bucket + '/' + id + '/resize'));
+};
 
+var createDir = function (path) {
+	var fs = require('fs');
 
+	try {
+		fs.mkdirSync(path);
+	}
+	catch (e) {
+		if (e.code != 'EEXIST') {
+			console.log(e);
+			return false;
+		};
+	};
+	return true;
 };
 
 var resizeImage = function (imagePath, width, height, resultPath) {
