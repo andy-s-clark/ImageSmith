@@ -45,15 +45,20 @@ exports.get = function(request, response) {
 	var mediaDir = request.app.get('media'),
 		bucket = request.param('bucket'),
 		id = request.param('id'),
-		image = request.param('image')
+		image = request.param('image'),
 		width = request.param('width'),
 		height = request.param('height');
+
+	if (!(width && height)) {
+		width = request.query.w;
+		height = request.query.h;
+	};
 
 	var flatPath = mediaDir + '/' + bucket + '/' + id + '/flat/' + image;
 
 	fs.readFile(flatPath, function(err, data) {
 		if (err) {
-			response.send(404, 'The file "'+path+'" has yet to be created');
+			response.send(404, 'The file "'+ flatPath +'" has yet to be created');
 		}
 		else {
 			if (width && height) {
