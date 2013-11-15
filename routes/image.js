@@ -175,6 +175,7 @@ var checkPath = function (mediaDir, bucket, id) {
 	var fs = require('fs');
 
 	return (
+		createDir(mediaDir) &&
 		createDir(mediaDir + '/' + bucket) &&
 		createDir(mediaDir + '/' + bucket + '/' + id) &&
 		createDir(mediaDir + '/' + bucket + '/' + id + '/orig') &&
