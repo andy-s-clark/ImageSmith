@@ -1,11 +1,97 @@
-div.drag-to-upload {
-	border: 2px dashed grey;
-	border-radius: 10px;
+.button, .light-button {
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+	background: #357e31 repeat-x scroll 0 0;
+	background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, rgba(255,255,255,0.3)), color-stop(100%, rgba(255,255,255,0)));
+	background-image: -webkit-linear-gradient(top, rgba(255,255,255,0.3),rgba(255,255,255,0));
+	background-image: -moz-linear-gradient(top, rgba(255,255,255,0.3),rgba(255,255,255,0));
+	background-image: linear-gradient(top, rgba(255,255,255,0.3),rgba(255,255,255,0));
+	color: #fff !important;
+	border: 1px solid transparent;
+	border-color: rgba(255,255,255,0.35) rgba(0,0,0,0.1) rgba(0,0,0,0.25);
+	cursor: pointer;
 	display: inline-block;
-	padding: 0px 10px 0px 10px;
+	font-size: 13px;
+	font-weight: bold;
+	font-family: "Arial",Helvetica,Verdana,Tahoma,sans-serif;
+	text-decoration: none !important;
+	text-shadow: 0 -1px 1px rgba(0,0,0,0.25);
+	margin: 0;
+	padding: 6px 15px;
+	overflow: visible;
+	width: auto;
+	text-align: center;
+	line-height: normal;
+	user-select: none;
+}
+
+.heading {
+	width: 870px;
+	background-color: #f1f1f1;
+	background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #f7f7f7), color-stop(100%, #f1f1f1));
+	background-image: -webkit-linear-gradient(top, #f7f7f7,#f1f1f1);
+	background-image: -moz-linear-gradient(top, #f7f7f7,#f1f1f1);
+	background-image: linear-gradient(top, #f7f7f7,#f1f1f1);
+	border-bottom: 1px solid #dedede;
+	font-size: 13px;
+	font-weight: 500;
+	margin: 0;
+	line-height: 1.5;
+	color: #3f3f3f;
+	padding: 10px 15px;
+}
+
+
+#dnd-content {
+	width: 848px;
+	padding: 19px 35px 19px 15px;
+	border: 1px solid #a5a5a5;
 }
 
 div.dz-message {
-	font-size: 20px;
-	line-height: 100px;
+	font-size: 18px;
+	line-height: 30px;
+	color: #aeaeae;
+	display: inline;
+	position: absolute;
+	padding-top: 34px;
 }
+
+button.light-button {
+	display: inline;
+	position: absolute;
+	margin: 35px 0 0 190px;
+}
+.light-button {
+	color: #3f3f3f !important;
+	background-color: #efefef;
+	border-color: #aaa;
+	text-shadow: 0 1px 1px rgba(255,255,255,0.25);
+}
+
+div.drag-to-upload {
+	border: 3px dashed #cccccc;
+	border-radius: 10px;
+	display: inline-block;
+	padding: 0px 10px 0px 10px;
+	height: 103px;
+	width:100%;
+}
+
+.dropzone>img {
+	padding: 19px 30px 19px 0px;
+	margin-left: 240px;
+}
+
+h1 {
+	font-size: 22px;
+	line-height: 2px;
+	color: #2b2b2b;
+}
+
+span.tree {
+	font-size: 12px;
+	float: right;
+}
+

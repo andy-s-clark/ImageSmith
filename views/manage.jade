@@ -1,13 +1,15 @@
 extends layout
 
 block content
-	h1= title
-	div.drag-to-upload
-		form(id='imgDropzone', class='dropzone', action='/images/' + dataLayer.bucket + "/" + dataLayer.id)
-			h1.dz-message Drag Image(s) Here
-	h2 Existing Files
-	hr
-	div#existing-files
-
-
+	div.heading
+		h1 ImageSmith
+		span.tree= title
+	div#dnd-content
+		div.drag-to-upload
+			form(id='imgDropzone', class='dropzone', action='/images/' + bucket + "/" + id)
+				img(src="http://build.com/mediabase/Site/Build.com/images/_uxfiles/image-icon.jpg")
+				div.dz-message Drag Image(s) Here or 
+				button.light-button Choose file
+		h2 Existing Files
+		hr
 
