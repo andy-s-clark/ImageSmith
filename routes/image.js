@@ -100,8 +100,21 @@ exports.index = function(request, response){
 	response.render('index', { title: 'What would you like to do with images?:' });
 };
 
+exports.drop = function(request, response){
+	response.render('drop', { title: 'Upload Image(s)', scripts:['dropzone.js'], styles: ['upload.css']});
+};
+
 exports.upload = function(request, response){
-	response.render('upload', { title: 'Upload Here'});
+	var fs = require('fs');
+	var mediaDir = request.app.get('media');
+
+	fs.readFile(request.files.file.path, function (exception, data) {
+		// TODO: error hadeling
+		var newPath = mediaDir + '/' + request.files.file.name;
+		fs.writeFile(newPath, data, function (exception) {
+			response.send("file uploaded");
+		});
+	});
 };
 
 var checkPath = function (bucket, id) {
