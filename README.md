@@ -24,9 +24,13 @@ Node Image Engine
 
 ### Get image
 * http://host/images/bucket/id/img1.jpg _(flat)_
-* http://host/images/bucket/id/img1.jpg?rw=300&rh=200 _(resized)_
+* http://host/images/bucket/id/img1.jpg?w=300&h=200 _(resized)_
+* TODO http://host/images/bucket/id/img1.jpg?w=300 (no height specified)
+* TODO http://host/images/bucket/id/img1.jpg?h=300 (no height specified)
 
 ##Media Storage
 * {media}/{bucket}/{id}/orig/img1.jpg
 * {media}/{bucket}/{id}/flat/img1.jpg
-* {media}/{bucket}/{id}/img1_w300_h200.jpg
+* {media}/{bucket}/{id}/300x200_img1.jpg
+* {media}/{bucket}/{id}/300x_img1.jpg
+* {media}/{bucket}/{id}/x200_img1.jpg
