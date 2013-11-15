@@ -2,19 +2,18 @@
 /*
  * GET images listing.
  */
-
-exports.list = function (req, res) {
+exports.list = function (request, response) {
 	var fs = require('fs');
-	var mediaDir = req.app.get('media');
+	var mediaDir = request.app.get('media');
 
-	var bucket = req.param('bucket');
-	var id = req.param('id');
+	var bucket = request.param('bucket');
+	var id = request.param('id');
 
 	mediaDir = mediaDir + '/' + bucket + '/' + id + '/orig';
 
 	fs.readdir(mediaDir, function (err, list) {
-		if ( err ) {
-			res.send(404, err);
+		if (err) {
+			response.send(404, err);
 		} else {
 			var files = [];
 
@@ -28,71 +27,79 @@ exports.list = function (req, res) {
 				};
 			};
 
-			res.json( { bucket: bucket, id: id, files: files });
+			response.json({ bucket: bucket, id: id, files: files });
 		}
 	});
 };
 
 /**
  * GET image
- * @TODO sanitize inputs! (ex. rw)
+ * TODO sanitize inputs! (ex. rw)
  */
-exports.get = function(req, res) {
-	var fs = require('fs'),
-		mediaDir = req.app.get('media'),
-		mime = require('mime');
-
-	var bucket = req.param('bucket'),
-		id = req.param('id'),
-		image = req.param('image'),
-		rw = req.query.rw,
-		rh = req.query.rh;
-
-	var i = image.lastIndexOf('.');
-	if ( i > 0 ) {
-		var fileName = image.substr(0, i);
-		var fileExt = image.substr(i + 1);
-	} else {
-		var fileName = image;
-		var fileExt = '';
-	}
-
-	var subdir = 'flat';
-	if ( rw ) {
-		subdir = 'resized';
-		fileName += '_w'+parseInt(rw);
-	}
-	if ( rh ) {
-		subdir = 'resized';
-		fileName += '_h'+parseInt(rh);
-	}
-	var path = mediaDir + '/' + bucket + '/' + id + '/' + subdir + '/' + fileName + (fileExt.length>0 ? '.' + fileExt : '');
-	if ( fs.readFile(path, function(err, data) {
-		if (err) {
-			// TODO Create resized image
-			res.send(404, 'The file "'+path+'" has yet to be created');
-		} else {
-			res.header('Content-Type', mime.lookup(path));
-			res.send(data);
-		}
-	}));
-}
-
-/*
- * POST new image
- */
-exports.post = function(req, res) {
+exports.get = function(request, response) {
+	var gm = require('gm');
+	var im = gm.subClass({ imageMagick: true });
 	var fs = require('fs');
-	var mediaDir = req.app.get('media');
-	var bucket = req.param('bucket');
-	var id = req.param('id');
+	var mime = require('mime');
 
-	var check = checkPath(mediaDir, bucket, id);
-	console.log('passed checkPath: ' + check);
+	var mediaDir = request.app.get('media'),
+		bucket = request.param('bucket'),
+		id = request.param('id'),
+		image = request.param('image')
+		width = request.param('width'),
+		height = request.param('height');
 
+	var flatPath = mediaDir + '/' + bucket + '/' + id + '/flat/' + image;
 
+	fs.readFile(flatPath, function(err, data) {
+		if (err) {
+			response.send(404, 'The file "'+path+'" has yet to be created');
+		}
+		else {
+			if (width && height) {
+				// check if we have the requested size...
+				var filePath = mediaDir + '/' + bucket + '/' + id + '/resized/' + width + 'x' + height + '_' + image;
 
-	res.send('success');
+				fs.readFile(filePath, function(err, data) {
+					if (err) {
+						// try to create new size
+						var path = mediaDir + '/' + bucket + '/' + id;
+
+						im(flatPath)
+							.strip()
+							.resize(width, height, '^')
+							.gravity('Center')
+							.crop(width, height)
+							.write(filePath, function (err) {
+								if (err) {
+									console.log('image.get.resizeImage: ' + err);
+									response.send(500, 'Could not create resized file');
+								}
+								else {
+									try {
+										data = fs.readFileSync(filePath);
+										response.header('Content-Type', mime.lookup(filePath));
+										response.send(data);
+									}
+									catch (e) {
+										response.send(500, 'Could not read resized file');
+									};
+								};
+							});
+					}
+					else {
+						response.header('Content-Type', mime.lookup(filePath));
+						response.send(data);
+					};
+				});
+			}
+			else {
+				// we have what we need -
+				response.header('Content-Type', mime.lookup(flatPath));
+				response.send(data);
+			};
+		};
+	});
 };
 
 exports.index = function(request, response){
@@ -100,19 +107,51 @@ exports.index = function(request, response){
 };
 
 exports.drop = function(request, response){
-	response.render('drop', { title: 'Upload Image(s)', scripts:['dropzone.js'], styles: ['upload.css']});
+	response.render('drop', { title: 'Upload Image(s)', scripts:['zepto.min.js', 'dropzone.js', 'upload.js'], styles: ['upload.css']});
 };
 
 exports.upload = function(request, response){
+	var gm = require('gm');
+	var im = gm.subClass({ imageMagick: true });
 	var fs = require('fs');
-	var mediaDir = request.app.get('media');
+	var bucket = request.body.bucket;
+	var id = request.body.id;
 
-	fs.readFile(request.files.file.path, function (exception, data) {
-		// TODO: error hadeling
-		var newPath = mediaDir + '/' + request.files.file.name;
-		fs.writeFile(newPath, data, function (exception) {
-			response.send("file uploaded");
-		});
+	fs.readFile(request.files.file.path, function (err, data) {
+		if (err) {
+			response.send(500, 'Error reading file');
+		}
+		else {
+			var mediaDir = request.app.get('media');
+
+			if (checkPath(mediaDir, bucket, id)) {
+				var origFile = mediaDir + '/' + bucket + '/' + id + '/orig/' + request.files.file.name;
+				var flatFile = mediaDir + '/' + bucket + '/' + id + '/flat/' + request.files.file.name;
+
+				fs.writeFile(origFile, data, function (err) {
+					if (err) {
+						response.send(500, 'Error writing file: ' + origFile);
+					}
+					else {
+						im(origFile)
+							.strip()
+							.write(flatFile, function (err) {
+								if (err) {
+									console.log('image.upload: ' + err);
+									return false;
+								}
+								else {
+									console.log('image.upload: success');
+									response.json({ file: flatFile });
+								};
+							});
+					};
+				});
+			}
+			else {
+				response.send(500, 'Error with file path');
+			};
+		};
 	});
 };
 
@@ -124,7 +163,7 @@ var checkPath = function (mediaDir, bucket, id) {
 		createDir(mediaDir + '/' + bucket + '/' + id) &&
 		createDir(mediaDir + '/' + bucket + '/' + id + '/orig') &&
 		createDir(mediaDir + '/' + bucket + '/' + id + '/flat') &&
-		createDir(mediaDir + '/' + bucket + '/' + id + '/resize'));
+		createDir(mediaDir + '/' + bucket + '/' + id + '/resized'));
 };
 
 var createDir = function (path) {
@@ -142,23 +181,5 @@ var createDir = function (path) {
 	return true;
 };
 
-var resizeImage = function (imagePath, width, height, resultPath) {
-	// base resizing command: -strip -resize [w]x[h]^ -gravity center -crop [w]x[h]+0+0
-
-	var gm = require('gm');
-	var im = gm.subClass({ imageMagick: true });
-
-	im(imagePath)
-		.strip()
-		.resize(width, height, '^')
-		.gravity('Center')
-		.crop(width, height)
-		.write(resultPath, function (err) {
-			if (err) {
-				console.log('image.resizeImage: ' + err);
-				return false;
-			};
-		});
-};
 
 

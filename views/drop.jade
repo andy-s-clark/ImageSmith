@@ -1,6 +1,15 @@
 extends layout
 
 block content
-  h1= title
-  div.drag-to-upload
-    form(action="/images/test/123" class="dropzone" method="post" enctype='multipart/form-data')
+	h1= title
+	div.drag-to-upload
+		form(id='imgDropzone', class='dropzone')
+	br
+	label(for='bucket') Bucket Name:
+		input(id='bucket', type='text')
+	br
+	label(for='id') Id:
+		input(id='id', type='text')
+
+
+
