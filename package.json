@@ -8,6 +8,7 @@
   "dependencies": {
     "express": "3.4.4",
     "jade": "*",
+    "mkdirp": "~0.3.5",
     "mime": "~1.2.11"
   }
 }

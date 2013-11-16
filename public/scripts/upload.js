@@ -6,9 +6,8 @@ Dropzone.options.imgDropzone = {
 		this.on('addedfile', function (file) {
 			var form = $('#imgDropzone');
 			var bucket = $('#bucket');
-			var id = $('#id');
 
-			if (!(bucket.val() && id.val())) {
+			if (!(bucket.val()) {
 
 			//} else {
 				this.removeFile(file);
@@ -16,10 +15,11 @@ Dropzone.options.imgDropzone = {
 		});
 		this.on('sending', function (file, xhr, formData) {
 			var bucket = $('#bucket');
-			var id = $('#id');
+			console.log('foo');
+			console.log(bucket);
+			console.log(formData);
 
 			formData.append('bucket', bucket.val());
-			formData.append('id', id.val());
 			console.log('sending');
 		});
 	}
