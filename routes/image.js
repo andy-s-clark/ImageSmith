@@ -45,7 +45,6 @@ exports.list = function (request, response) {
 
 /**
  * GET image
- * TODO sanitize inputs! (ex. rw)
  */
 exports.get = function(request, response) {
 	var gm = require('gm');
@@ -60,56 +59,59 @@ exports.get = function(request, response) {
 		width = request.param('width'),
 		height = request.param('height');
 
-	if (!(width && height)) {
+	if (! width) {
 		width = request.query.w;
+	};
+
+	if (! height) {
 		height = request.query.h;
 	};
 
+	// Sanitize inputs
+	width = parseInt(width);
+	height = parseInt(height);
 	var flatPath = mediaDir + '/' + bucket + '/' + id + '/flat/' + image;
 
 	fs.readFile(flatPath, function(err, data) {
 		if (err) {
 			response.send(404, 'The file "'+ flatPath +'" has yet to be created');
-		}
-		else {
-			if (width && height) {
+		} else {
+			var filePath = mediaDir + '/' + bucket + '/' + id + '/resized/' + ( width ? width : '') + 'x' + ( height ? height : '') + '_' + image;
+			if (width || height) {
 				// check if we have the requested size...
-				var filePath = mediaDir + '/' + bucket + '/' + id + '/resized/' + width + 'x' + height + '_' + image;
-
 				fs.readFile(filePath, function(err, data) {
 					if (err) {
 						// try to create new size
 						var path = mediaDir + '/' + bucket + '/' + id;
-
-						im(flatPath)
-							.strip()
-							.resize(width, height, '^')
-							.gravity('Center')
-							.crop(width, height)
-							.write(filePath, function (err) {
-								if (err) {
-									console.log('image.get.resizeImage: ' + err);
-									response.send(500, 'Could not create resized file');
+						var img = im(flatPath).strip();
+						if ( width && height ) {
+							img = img.resize(width, height, '^')
+								.crop(width, height)
+								.gravity('Center');
+						} else {
+							img = img.resize( ( width ? width : '' ) +( height ? 'x'+height : '' ) ) ;
+						}
+						img.write(filePath, function (err) {
+							if (err) {
+								console.log('image.get.resizeImage: ' + err);
+								response.send(500, 'Could not create resized file');
+							} else {
+								try {
+									data = fs.readFileSync(filePath);
+									response.header('Content-Type', mime.lookup(filePath));
+									response.send(data);
 								}
-								else {
-									try {
-										data = fs.readFileSync(filePath);
-										response.header('Content-Type', mime.lookup(filePath));
-										response.send(data);
-									}
-									catch (e) {
-										response.send(500, 'Could not read resized file');
-									};
+								catch (e) {
+									response.send(500, 'Could not read resized file');
 								};
-							});
-					}
-					else {
+							};
+						});
+					} else {
 						response.header('Content-Type', mime.lookup(filePath));
 						response.send(data);
 					};
 				});
-			}
-			else {
+			} else {
 				// we have what we need -
 				response.header('Content-Type', mime.lookup(flatPath));
 				response.send(data);
