@@ -4,13 +4,13 @@
  */
 exports.list = function (request, response) {
 	var fs = require('fs');
-	var mediaDir = request.app.get('media');
+	var mediaPath = request.app.get('media');
 
 	var bucket = request.param('bucket');
 
-	mediaDir = mediaDir + '/' + bucket + '/orig';
+	mediaPath = mediaPath + '/' + bucket;
 
-	fs.readdir(mediaDir, function (err, list) {
+	fs.readdir(mediaPath, function (err, list) {
 		if (err) {
 			response.send(404, err);
 		} else {
@@ -19,7 +19,7 @@ exports.list = function (request, response) {
 			if (list) {
 				for(var i = 0; i < list.length; i++) {
 					var file = list[i];
-					var stat = fs.statSync(mediaDir + '/' + file);
+					var stat = fs.statSync(mediaPath + '/' + file);
 
 					if (stat.isFile() ) {
 
@@ -43,14 +43,17 @@ exports.list = function (request, response) {
 
 /**
  * GET image
+ * @LATER Use flat file for resize, using original in case flat does not exist
  */
 exports.get = function(request, response) {
-	var gm = require('gm');
-	var im = gm.subClass({ imageMagick: true });
-	var fs = require('fs');
-	var mime = require('mime');
+	var gm = require('gm'),
+		im = gm.subClass({ imageMagick: true }),
+		fs = require('fs'),
+		mkdirp = require('mkdirp'),
+		mime = require('mime');
 
-	var mediaDir = request.app.get('media'),
+	var mediaPath = request.app.get('media'),
+		cachePath = request.app.get('cache'),
 		bucket = request.param('bucket'),
 		image = request.param('image'),
 		width = request.param('width'),
@@ -66,50 +69,56 @@ exports.get = function(request, response) {
 	// Sanitize inputs
 	width = parseInt(width);
 	height = parseInt(height);
-	var flatPath = mediaDir + '/' + bucket + '/flat/' + image;
+	var origFile = mediaPath + '/' + bucket + '/' + image,
+		resizedPath = cachePath + '/' + bucket;
 
-	fs.readFile(flatPath, function(err, data) {
+	fs.readFile(origFile, function(err, data) {
 		if (err) {
-			response.send(404, 'The file "' +  flatPath  + '" has yet to be created');
+			response.send(404, 'The file "' +  origFile  + '" does not exist');
 		} else {
-			var filePath = mediaDir + '/' + bucket + '/' + '/resized/' + ( width ? width : '') + 'x' + ( height ? height : '') + '_' + image;
+			var resizedFile = resizedPath + '/' + ( width ? width : '') + 'x' + ( height ? height : '') + '_' + image;
 			if (width || height) {
 				// check if we have the requested size...
-				fs.readFile(filePath, function(err, data) {
+				fs.readFile(resizedFile, function(err, data) {
 					if (err) {
-						// try to create new size
-						var path = mediaDir + '/' + bucket;
-						var img = im(flatPath).strip();
-						if ( width && height ) {
-							img = img.resize(width, height, '^')
-								.crop(width, height)
-								.gravity('Center');
-						} else {
-							img = img.resize( ( width ? width : '' )  + ( height ? 'x' + height : '' ) ) ;
-						}
-						img.write(filePath, function (err) {
-							if (err) {
-								console.log('image.get.resizeImage: ' + err);
-								response.send(500, 'Could not create resized file');
+						mkdirp(resizedPath, function(err) {
+							if(err && err.code != 'EEXIST') {
+								response.send(500, 'Could not create folder: ' + resizedPath);
 							} else {
-								try {
-									data = fs.readFileSync(filePath);
-									response.header('Content-Type', mime.lookup(filePath));
-									response.send(data);
+								// try to create new size
+								var img = im(origFile).strip();
+								if ( width && height ) {
+									img = img.resize(width, height, '^')
+										.crop(width, height)
+										.gravity('Center');
+								} else {
+									img = img.resize( ( width ? width : '' )  + ( height ? 'x' + height : '' ) ) ;
 								}
-								catch (e) {
-									response.send(500, 'Could not read resized file');
-								};
-							};
+								img.write(resizedFile, function (err) {
+									if (err) {
+										console.log('image.get.resizeImage: ' + err);
+										response.send(500, 'Could not create resized file:'+resizedFile);
+									} else {
+										try {
+											data = fs.readFileSync(resizedFile); // LATER async
+											response.header('Content-Type', mime.lookup(resizedFile));
+											response.send(data);
+										}
+										catch (e) {
+											response.send(500, 'Could not read resized file');
+										};
+									};
+								});
+							}
 						});
 					} else {
-						response.header('Content-Type', mime.lookup(filePath));
+						response.header('Content-Type', mime.lookup(resizedFile));
 						response.send(data);
 					};
 				});
 			} else {
-				// we have what we need -
-				response.header('Content-Type', mime.lookup(flatPath));
+				// we have what we need
+				response.header('Content-Type', mime.lookup(origFile));
 				response.send(data);
 			};
 		};
@@ -145,49 +154,34 @@ exports.upload = function(request, response) {
 		mkdirp = require('mkdirp');
 
 	var bucket = request.params.bucket ? request.params.bucket : request.body.bucket,
-		mediaDir = request.app.get('media');
-
-console.log(bucket);
-console.log(request.files.file);
-
-	// LATER Avoid callback hell
-	var origPath = mediaDir + '/' + bucket + '/orig',
-		flatPath = mediaDir + '/' + bucket + '/flat',
-		flatFile = flatPath + '/' + request.files.file.name,
-		origFile = origPath + '/' + request.files.file.name;
+		mediaPath = request.app.get('media'),
+		cachePath = request.app.get('cache'),
+		origPath = mediaPath + '/' + bucket,
+		flatFile = cachePath + '/' + bucket + '/' + request.files.file.name,
+		origFile = origPath + '/flat_' + request.files.file.name;
 
 	mkdirp(origPath, function(err) {
 		if (err && err.code != 'EEXIST') {
 			console.log(err);
 			response.send(500, 'Error creating folder');
 		} else {
-			fs.mkdir(flatPath, function(err) {
-				if (err && err.code != 'EEXIST') {
-					console.log(err);
-					response.send(500, 'Error creating folder');
+			// LATER Use async to handle multiple files ( file[] )
+			fs.readFile(request.files.file.path, function(err, data) {
+				if(err) {
+					response.send(500, 'Error reading upload');
 				} else {
-					// LATER Use async to handle multiple files ( file[] )
-					fs.readFile(request.files.file.path, function(err, data) {
-						if(err) {
-							response.send(500, 'Error reading upload');
+					fs.writeFile(origFile, data, function(err) {
+						if (err) {
+							response.send(500, 'Error writing file');
 						} else {
-							fs.writeFile(origFile, data, function(err) {
+							makeFlat(request, bucket, request.files.file.name, function(err) {
 								if (err) {
-									response.send(500, 'Error writing file');
+									response.json(500, err);
 								} else {
-									im(origFile)
-										.strip()
-										.write(flatFile, function (err) {
-											if (err) {
-												console.log('image.upload: ' + err);
-												return false;
-											} else {
-												console.log('image.upload: success');
-												response.json({ file: flatFile });
-											};
-										});
+									response.json({ file: flatFile });
 								}
 							});
+
 						}
 					});
 				}
@@ -197,14 +191,39 @@ console.log(request.files.file);
 
 }
 
+
 /**
  * Make flattened version of image
  */
-var makeFlat = function(bucket, origFile, callback) {
+var makeFlat = function(request, bucket, filename, callback) {
 	var gm = require('gm'),
 		im = gm.subClass({ imageMagick: true }),
+		fs = require('fs'),
 		mkdirp = require('mkdirp'),
-		mediaDir = request.app.get('media');
+		origFile = request.app.get('media')+'/'+bucket+'/'+filename;
+		destDir = request.app.get('cache')+'/'+bucket,
+		flatFile = destDir+'/'+filename;
 
-
+	mkdirp(flatDir, function(err) {
+		if (err && err.code != 'EEXIST') {
+			callback(err);
+		} else {
+			fs.readFile(origFile, function(err, data) {
+				if(err) {
+					callback(err);
+				} else {
+					im(origFile)
+					.strip()
+					.write(flatFile, function (err) {
+						if (err) {
+							console.log('image.upload: ' + err);
+							callback(err);
+						} else {
+							callback();
+						};
+					});
+				}
+			});
+		}
+	});
 }
