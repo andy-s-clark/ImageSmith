@@ -140,7 +140,6 @@ exports.upload = function(request, response) {
 	var gm = require('gm'),
 		im = gm.subClass({ imageMagick: true }),
 		fs = require('fs'),
-		async = require('async'),
 		mkdirp = require('mkdirp');
 
 	var bucket = request.params.bucket ? request.params.bucket : request.body.bucket,
