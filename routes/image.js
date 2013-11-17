@@ -135,7 +135,6 @@ exports.manage = function(request, response) {
 
 /**
  * Handle upload
- * @TODO Handle duplicate filenames (either replace and delete resized or increment name)
  */
 exports.upload = function(request, response) {
 	var gm = require('gm'),
@@ -150,24 +149,36 @@ exports.upload = function(request, response) {
 		filename = request.files.file.name,
 		origPath = mediaPath + '/' + bucket,
 		flatPath = cachePath + '/' + bucket,
-		origFile = origPath + '/' + filename;
+		origFile;
+
+	// Make sure filename is unique. LATER do this async.
+	var tmp = filename,
+		i = 0;
+	while ( fs.existsSync(origPath+'/'+tmp) ) {
+		i++;
+		tmp = i+filename;
+		if ( i == 1000 ) break; // Allow a duplicate after too many attempts
+	}
+	filename = tmp;
 
 	mkdirp(origPath, function(err) {
 		if (err && err.code != 'EEXIST') {
 			console.log(err);
 			response.send(500, 'Error creating folder');
 		} else {
-			// LATER Use async to handle multiple files ( file[] )
 			fs.readFile(request.files.file.path, function(err, data) {
 				if(err) {
+					console.log('Error reading upload');
 					response.send(500, 'Error reading upload');
 				} else {
-					fs.writeFile(origFile, data, function(err) {
+					fs.writeFile(origPath + '/' + filename, data, function(err) {
 						if (err) {
 							response.send(500, 'Error writing file');
+							console.log(500, 'Error writing file');
 						} else {
 							makeFlat(filename, origPath, cachePath+'/'+bucket, function(err) {
 								if (err) {
+									console.log(err);
 									response.json(500, err);
 								} else {
 									response.json({ file:  cachePath+ '/' + filename });
