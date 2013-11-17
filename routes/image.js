@@ -70,7 +70,7 @@ exports.get = function(request, response) {
 
 	fs.readFile(flatPath, function(err, data) {
 		if (err) {
-			response.send(404, 'The file "'+ flatPath +'" has yet to be created');
+			response.send(404, 'The file "' +  flatPath  + '" has yet to be created');
 		} else {
 			var filePath = mediaDir + '/' + bucket + '/' + '/resized/' + ( width ? width : '') + 'x' + ( height ? height : '') + '_' + image;
 			if (width || height) {
@@ -85,7 +85,7 @@ exports.get = function(request, response) {
 								.crop(width, height)
 								.gravity('Center');
 						} else {
-							img = img.resize( ( width ? width : '' ) +( height ? 'x'+height : '' ) ) ;
+							img = img.resize( ( width ? width : '' )  + ( height ? 'x' + height : '' ) ) ;
 						}
 						img.write(filePath, function (err) {
 							if (err) {
@@ -133,45 +133,78 @@ exports.manage = function(request, response) {
 	});
 }
 
-exports.upload = function(request, response){
-	var gm = require('gm');
-	var im = gm.subClass({ imageMagick: true });
-	var fs = require('fs');
-	var bucket = request.params.bucket ? request.params.bucket : request.body.bucket;
-response.json(request.files.file.path);
-	// fs.readFile(request.files.file.path, function (err, data) {
-	// 	if (err) {
-	// 		response.send(500, 'Error reading file');
-	// 	}
-	// 	else {
-	// 		var mediaDir = request.app.get('media');
+/**
+ * Handle upload
+ * @TODO Handle duplicate filenames (replace/delete resized or increment name?)
+ */
+exports.upload = function(request, response) {
+	var gm = require('gm'),
+		im = gm.subClass({ imageMagick: true }),
+		fs = require('fs'),
+		async = require('async'),
+		mkdirp = require('mkdirp');
 
-	// 		mkdirp(basePath + '/' + bucket, function(err) {
-	// 			if(err) {
-	// 				response.send(500, err);
-	// 			} else {
-	// 				var origFile = mediaDir + '/' + bucket + '/orig/' + request.files.file.name;
-	// 				var flatFile = mediaDir + '/' + bucket + '/flat/' + request.files.file.name;
+	var bucket = request.params.bucket ? request.params.bucket : request.body.bucket,
+		mediaDir = request.app.get('media');
 
-	// 				fs.writeFile(origFile, data, function (err) {
-	// 					if (err) {
-	// 						response.send(500, 'Error writing file: ' + origFile);
-	// 					} else {
-	// 						im(origFile)
-	// 							.strip()
-	// 							.write(flatFile, function (err) {
-	// 								if (err) {
-	// 									console.log('image.upload: ' + err);
-	// 									return false;
-	// 								} else {
-	// 									console.log('image.upload: success');
-	// 									response.json({ file: flatFile });
-	// 								};
-	// 							});
-	// 					};
-	// 				});
-	// 			}
-	// 		});
-	// 	};
-	// });
-};
+console.log(bucket);
+console.log(request.files.file);
+
+	// LATER Avoid callback hell
+	var origPath = mediaDir + '/' + bucket + '/orig',
+		flatPath = mediaDir + '/' + bucket + '/flat',
+		flatFile = flatPath + '/' + request.files.file.name,
+		origFile = origPath + '/' + request.files.file.name;
+
+	mkdirp(origPath, function(err) {
+		if (err && err.code != 'EEXIST') {
+			console.log(err);
+			response.send(500, 'Error creating folder');
+		} else {
+			fs.mkdir(flatPath, function(err) {
+				if (err && err.code != 'EEXIST') {
+					console.log(err);
+					response.send(500, 'Error creating folder');
+				} else {
+					// LATER Use async to handle multiple files ( file[] )
+					fs.readFile(request.files.file.path, function(err, data) {
+						if(err) {
+							response.send(500, 'Error reading upload');
+						} else {
+							fs.writeFile(origFile, data, function(err) {
+								if (err) {
+									response.send(500, 'Error writing file');
+								} else {
+									im(origFile)
+										.strip()
+										.write(flatFile, function (err) {
+											if (err) {
+												console.log('image.upload: ' + err);
+												return false;
+											} else {
+												console.log('image.upload: success');
+												response.json({ file: flatFile });
+											};
+										});
+								}
+							});
+						}
+					});
+				}
+			});
+		}
+	});
+
+}
+
+/**
+ * Make flattened version of image
+ */
+var makeFlat = function(bucket, origFile, callback) {
+	var gm = require('gm'),
+		im = gm.subClass({ imageMagick: true }),
+		mkdirp = require('mkdirp'),
+		mediaDir = request.app.get('media');
+
+
+}

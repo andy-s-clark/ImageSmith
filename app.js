@@ -15,6 +15,7 @@ app.set('port', process.env.PORT || 3000);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 app.set('media', path.join(__dirname, 'media'));
+app.set('cache', path.join(__dirname, 'cache'));
 
 // bodyparser for file upload lots of discussion on weather or not this is safe
 app.use(express.bodyParser());
@@ -42,10 +43,10 @@ app.get('/images/:bucket([^\*]+)/:image([^\*]+\.[a-zA-Z0-9]+)', image.get);
 // LATER app.get('/images/:bucket/:id/:width/:height/:image', image.get);
 
 app.get('/images/:bucket([^\*]+)', image.manage);
-app.post('/images/:bucket/:id', image.upload);
+app.post('/images/:bucket([^\*]+)', image.upload);
 
-app.get('/images/upload', image.drop);
-app.post('/images/upload', image.upload);
+// app.get('/images/upload', image.drop);
+// app.post('/images/upload', image.upload);
 
 http.createServer(app).listen(app.get('port'), function(){
 	console.log('Express server listening on port ' + app.get('port'));

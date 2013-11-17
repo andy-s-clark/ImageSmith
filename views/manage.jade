@@ -13,4 +13,9 @@ block content
 		hr
 		div#existing-files
 
+	h2 Upload Test
+	form(action="/images/foo/bar/foobar", method="post", enctype="multipart/form-data")
+		input(type="file", name="file")
+		input(type="submit")
+
 
