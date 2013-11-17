@@ -1,25 +1,20 @@
-
 /*
  * GET images listing.
  */
 exports.list = function (request, response) {
-	var fs = require('fs');
-	var mediaPath = request.app.get('media');
-
-	var bucket = request.param('bucket');
-
-	mediaPath = mediaPath + '/' + bucket;
+	var fs = require('fs'),
+		mediaPath = request.app.get('media'),
+		bucket = request.param('bucket'),
+		mediaPath = mediaPath + '/' + bucket;
 
 	fs.readdir(mediaPath, function (err, list) {
 		var files = {};
-
 		if (list) {
 			for(var i = 0; i < list.length; i++) {
-				var file = list[i];
-				var stat = fs.statSync(mediaPath + '/' + file);
+				var file = list[i],
+					stat = fs.statSync(mediaPath + '/' + file);
 
 				if (stat.isFile() ) {
-
 					files[file] = {
 						filename: file,
 						stats: {
@@ -32,14 +27,13 @@ exports.list = function (request, response) {
 				}
 			};
 		};
-
 		response.json({ bucket: bucket, files: files });
 	});
 };
 
+
 /**
  * GET image
- * @LATER Use flat file for resize (@see makeFlat), using original in case flat does not exist
  */
 exports.get = function(request, response) {
 	var gm = require('gm'),
@@ -68,7 +62,7 @@ exports.get = function(request, response) {
 	var origFile = mediaPath + '/' + bucket + '/' + image,
 		resizedPath = cachePath + '/' + bucket;
 
-	fs.readFile(origFile, function(err, data) {
+	readFlat(image, mediaPath + '/' + bucket, cachePath + '/' + bucket, function(err, data) {
 		if (err) {
 			response.send(404, 'The file "' +  origFile  + '" does not exist');
 		} else {
@@ -138,9 +132,10 @@ exports.manage = function(request, response) {
 	});
 }
 
+
 /**
  * Handle upload
- * @TODO Handle duplicate filenames (replace/delete resized or increment name?)
+ * @TODO Handle duplicate filenames (either replace and delete resized or increment name)
  */
 exports.upload = function(request, response) {
 	var gm = require('gm'),
@@ -152,9 +147,10 @@ exports.upload = function(request, response) {
 	var bucket = request.params.bucket ? request.params.bucket : request.body.bucket,
 		mediaPath = request.app.get('media'),
 		cachePath = request.app.get('cache'),
+		filename = request.files.file.name,
 		origPath = mediaPath + '/' + bucket,
-		flatFile = cachePath + '/' + bucket + '/' + request.files.file.name,
-		origFile = origPath + '/' + request.files.file.name;
+		flatPath = cachePath + '/' + bucket,
+		origFile = origPath + '/' + filename;
 
 	mkdirp(origPath, function(err) {
 		if (err && err.code != 'EEXIST') {
@@ -170,11 +166,11 @@ exports.upload = function(request, response) {
 						if (err) {
 							response.send(500, 'Error writing file');
 						} else {
-							makeFlat(request, bucket, request.files.file.name, function(err) {
+							makeFlat(filename, origPath, cachePath+'/'+bucket, function(err) {
 								if (err) {
 									response.json(500, err);
 								} else {
-									response.json({ file: flatFile });
+									response.json({ file:  cachePath+ '/' + filename });
 								}
 							});
 
@@ -184,23 +180,45 @@ exports.upload = function(request, response) {
 			});
 		}
 	});
+}
 
+
+/**
+ * Read flattened version of image
+ * Create from original if needed
+ */
+var readFlat = function(filename, origPath, flatPath, callback) {
+	var fs = require('fs');
+	fs.readFile(flatPath+'/'+filename, function(err, data) {
+		if(err) {
+			makeFlat(filename, origPath, flatPath, function(err){
+				if(err) {
+					callback(err);
+				} else {
+					fs.readFile(flatPath+'/'+filename, function(err, data) {
+						callback(err, data);
+					});
+				}
+			});
+		} else {
+			callback(err, data);
+		}
+	});
 }
 
 
 /**
  * Make flattened version of image
  */
-var makeFlat = function(request, bucket, filename, callback) {
+var makeFlat = function(filename, sourcePath, destPath, callback) {
 	var gm = require('gm'),
 		im = gm.subClass({ imageMagick: true }),
 		fs = require('fs'),
 		mkdirp = require('mkdirp'),
-		origFile = request.app.get('media')+'/'+bucket+'/'+filename;
-		destDir = request.app.get('cache')+'/'+bucket,
-		flatFile = destDir+'/'+filename;
+		origFile = sourcePath+'/'+filename,
+		flatFile = destPath+'/'+filename;
 
-	mkdirp(destDir, function(err) {
+	mkdirp(destPath, function(err) {
 		if (err && err.code != 'EEXIST') {
 			callback(err);
 		} else {
