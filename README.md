@@ -35,6 +35,10 @@ A _bucket_ is one or more directories deep. ex.
 * TODO http://host/images/bucket/img1.jpg?h=300 (no height specified)
 
 ##Media Storage
+Media is stored separately from cached (flattened and resized) images. This allows handling existing files
+and files uploaded outside of this system. This also makes it possible to store cached images on a cheaper
+medium.
+
 * {media}/{bucket}/img1.jpg
 * {cache}/{bucket}/img1.jpg
 * {cache}/{bucket}/300x200_img1.jpg
