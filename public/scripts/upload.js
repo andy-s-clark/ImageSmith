@@ -34,7 +34,7 @@ $(function() {
 	var imgDropzone = new Dropzone('form#imgDropzone');
 
 	imgDropzone.on('addedfile', function(file) {
-		if (bucket.val() && id.val()) {
+		if (bucket.val()) {
 			//imgDropzone = { url: url() };
 			console.log('test');
 			imgDropzone.processQueue();
@@ -50,9 +50,9 @@ $(function() {
 			console.log('test--');
 			this.on('addedfile', function(file) {
 				console.log('test');
-				if (bucket.val() && id.val()) {
+				if (bucket.val()) {
 
-					var url = '/image/upload/' + bucket.val() + '/' + id.val();
+					var url = '/image/upload/' + bucket.val();
 					form.attr('action', url);
 
 					console.log(url);
