@@ -18,19 +18,25 @@ Node Image Engine
 -or-
 `node app.js`
 
+##Definitions
+A _bucket_ is one or more directories deep. ex.
+* products/123
+* buildcom/email/2013
+
 ##Usage
+
 ### Get list of images
 * http://host/images/bucket/id.json
 
 ### Get image
-* http://host/images/bucket/id/img1.jpg _(flat)_
-* http://host/images/bucket/id/img1.jpg?w=300&h=200 _(resized)_
-* TODO http://host/images/bucket/id/img1.jpg?w=300 (no height specified)
-* TODO http://host/images/bucket/id/img1.jpg?h=300 (no height specified)
+* http://host/images/bucket/img1.jpg _(flat)_
+* http://host/images/bucket/img1.jpg?w=300&h=200 _(resized)_
+* TODO http://host/images/bucket/img1.jpg?w=300 (no height specified)
+* TODO http://host/images/bucket/img1.jpg?h=300 (no height specified)
 
 ##Media Storage
-* {media}/{bucket}/{id}/orig/img1.jpg
-* {media}/{bucket}/{id}/flat/img1.jpg
-* {media}/{bucket}/{id}/300x200_img1.jpg
-* {media}/{bucket}/{id}/300x_img1.jpg
-* {media}/{bucket}/{id}/x200_img1.jpg
+* {media}/{bucket}/img1.jpg
+* {cache}/{bucket}/img1.jpg
+* {cache}/{bucket}/300x200_img1.jpg
+* {cache}/{bucket}/300x_img1.jpg
+* {cache}/{bucket}/x200_img1.jpg

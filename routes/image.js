@@ -11,39 +11,35 @@ exports.list = function (request, response) {
 	mediaPath = mediaPath + '/' + bucket;
 
 	fs.readdir(mediaPath, function (err, list) {
-		if (err) {
-			response.send(404, err);
-		} else {
-			var files = {};
+		var files = {};
 
-			if (list) {
-				for(var i = 0; i < list.length; i++) {
-					var file = list[i];
-					var stat = fs.statSync(mediaPath + '/' + file);
+		if (list) {
+			for(var i = 0; i < list.length; i++) {
+				var file = list[i];
+				var stat = fs.statSync(mediaPath + '/' + file);
 
-					if (stat.isFile() ) {
+				if (stat.isFile() ) {
 
-						files[file] = {
-							filename: file,
-							stats: {
-								size: stat.size,
-								atime: stat.atime,
-								mtime: stat.mtime,
-								ctime: stat.ctime
-							}
-						};
-					}
-				};
+					files[file] = {
+						filename: file,
+						stats: {
+							size: stat.size,
+							atime: stat.atime,
+							mtime: stat.mtime,
+							ctime: stat.ctime
+						}
+					};
+				}
 			};
+		};
 
-			response.json({ bucket: bucket, files: files });
-		}
+		response.json({ bucket: bucket, files: files });
 	});
 };
 
 /**
  * GET image
- * @LATER Use flat file for resize, using original in case flat does not exist
+ * @LATER Use flat file for resize (@see makeFlat), using original in case flat does not exist
  */
 exports.get = function(request, response) {
 	var gm = require('gm'),
@@ -158,7 +154,7 @@ exports.upload = function(request, response) {
 		cachePath = request.app.get('cache'),
 		origPath = mediaPath + '/' + bucket,
 		flatFile = cachePath + '/' + bucket + '/' + request.files.file.name,
-		origFile = origPath + '/flat_' + request.files.file.name;
+		origFile = origPath + '/' + request.files.file.name;
 
 	mkdirp(origPath, function(err) {
 		if (err && err.code != 'EEXIST') {
@@ -204,7 +200,7 @@ var makeFlat = function(request, bucket, filename, callback) {
 		destDir = request.app.get('cache')+'/'+bucket,
 		flatFile = destDir+'/'+filename;
 
-	mkdirp(flatDir, function(err) {
+	mkdirp(destDir, function(err) {
 		if (err && err.code != 'EEXIST') {
 			callback(err);
 		} else {
