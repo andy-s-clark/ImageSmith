@@ -1,9 +1,8 @@
-var bucket = window.dataLayer.bucket,
-	id = window.dataLayer.id;
+var bucket = window.dataLayer.bucket;
 
 function displayImages()
 {
-	var basePath = '/images/'+bucket+'/'+id;
+	var basePath = '/images/'+bucket;
 	/* empty the div */
 	$("#existing-files").empty();
 
@@ -15,7 +14,7 @@ function displayImages()
 				class: "thumbnail"
 			}),
 				fileName = basePath+'/'+item.filename,
-				baseUrl = window.location.protocol + "://" + window.location.host;
+				baseUrl = window.location.protocol + "//" + window.location.host;
 
 			thumbnail.append($('<img width="75" height="75"/>', {
 				src: fileName+'?w=75&h=75'
@@ -36,7 +35,7 @@ displayImages();
 Dropzone.options.imgDropzone = {
 	init: function () {
 		this.on('success', function (file) {
-			/*if (!(bucket.value && id.value)) {
+			/*if (!(bucket.value) {
 				this.removeFile(file);
 			};*/
 			/* refresh */

@@ -1,64 +1,53 @@
-
 /*
  * GET images listing.
  */
 exports.list = function (request, response) {
-	var fs = require('fs');
-	var mediaDir = request.app.get('media');
+	var fs = require('fs'),
+		mediaPath = request.app.get('media'),
+		bucket = request.param('bucket'),
+		mediaPath = mediaPath + '/' + bucket;
 
-	var bucket = request.param('bucket');
-	var id = request.param('id');
+	fs.readdir(mediaPath, function (err, list) {
+		var files = {};
+		if (list) {
+			for(var i = 0; i < list.length; i++) {
+				var file = list[i],
+					stat = fs.statSync(mediaPath + '/' + file);
 
-	mediaDir = mediaDir + '/' + bucket + '/' + id + '/orig';
-
-	fs.readdir(mediaDir, function (err, list) {
-		if (err) {
-			response.send(404, err);
-		} else {
-			var files = {};
-
-			if (list) {
-				for(var i = 0; i < list.length; i++) {
-					var file = list[i];
-					var stat = fs.statSync(mediaDir + '/' + file);
-					var path = '/media/' + bucket + '/' + id + '/' + file;
-
-					if (stat.isFile() ) {
-
-						files[file] = {
-							filename: file,
-							stats: {
-								size: stat.size,
-								atime: stat.atime,
-								mtime: stat.mtime,
-								ctime: stat.ctime
-							}
-						};
-					}
-				};
+				if (stat.isFile() ) {
+					files[file] = {
+						filename: file,
+						stats: {
+							size: stat.size,
+							atime: stat.atime,
+							mtime: stat.mtime,
+							ctime: stat.ctime
+						}
+					};
+				}
 			};
-
-			response.json({ bucket: bucket, id: id, files: files });
-		}
+		};
+		response.json({ bucket: bucket, files: files });
 	});
 };
+
 
 /**
  * GET image
  */
 exports.get = function(request, response) {
-	var gm = require('gm');
-	var im = gm.subClass({ imageMagick: true });
-	var fs = require('fs');
-	var mime = require('mime');
+	var gm = require('gm'),
+		im = gm.subClass({ imageMagick: true }),
+		fs = require('fs'),
+		mkdirp = require('mkdirp'),
+		mime = require('mime');
 
-	var mediaDir = request.app.get('media'),
+	var mediaPath = request.app.get('media'),
+		cachePath = request.app.get('cache'),
 		bucket = request.param('bucket'),
-		id = request.param('id'),
 		image = request.param('image'),
 		width = request.param('width'),
 		height = request.param('height');
-
 	if (! width) {
 		width = request.query.w;
 	};
@@ -70,50 +59,56 @@ exports.get = function(request, response) {
 	// Sanitize inputs
 	width = parseInt(width);
 	height = parseInt(height);
-	var flatPath = mediaDir + '/' + bucket + '/' + id + '/flat/' + image;
+	var origFile = mediaPath + '/' + bucket + '/' + image,
+		resizedPath = cachePath + '/' + bucket;
 
-	fs.readFile(flatPath, function(err, data) {
+	readFlat(image, mediaPath + '/' + bucket, cachePath + '/' + bucket, function(err, data) {
 		if (err) {
-			response.send(404, 'The file "'+ flatPath +'" has yet to be created');
+			response.send(404, 'The file "' +  origFile  + '" does not exist');
 		} else {
-			var filePath = mediaDir + '/' + bucket + '/' + id + '/resized/' + ( width ? width : '') + 'x' + ( height ? height : '') + '_' + image;
+			var resizedFile = resizedPath + '/' + ( width ? width : '') + 'x' + ( height ? height : '') + '_' + image;
 			if (width || height) {
 				// check if we have the requested size...
-				fs.readFile(filePath, function(err, data) {
+				fs.readFile(resizedFile, function(err, data) {
 					if (err) {
-						// try to create new size
-						var path = mediaDir + '/' + bucket + '/' + id;
-						var img = im(flatPath).strip();
-						if ( width && height ) {
-							img = img.resize(width, height, '^')
-								.crop(width, height)
-								.gravity('Center');
-						} else {
-							img = img.resize( ( width ? width : '' ) +( height ? 'x'+height : '' ) ) ;
-						}
-						img.write(filePath, function (err) {
-							if (err) {
-								console.log('image.get.resizeImage: ' + err);
-								response.send(500, 'Could not create resized file');
+						mkdirp(resizedPath, function(err) {
+							if(err && err.code != 'EEXIST') {
+								response.send(500, 'Could not create folder: ' + resizedPath);
 							} else {
-								try {
-									data = fs.readFileSync(filePath);
-									response.header('Content-Type', mime.lookup(filePath));
-									response.send(data);
+								// try to create new size
+								var img = im(origFile).strip();
+								if ( width && height ) {
+									img = img.resize(width, height, '^')
+										.crop(width, height)
+										.gravity('Center');
+								} else {
+									img = img.resize( ( width ? width : '' )  + ( height ? 'x' + height : '' ) ) ;
 								}
-								catch (e) {
-									response.send(500, 'Could not read resized file');
-								};
-							};
+								img.write(resizedFile, function (err) {
+									if (err) {
+										console.log('image.get.resizeImage: ' + err);
+										response.send(500, 'Could not create resized file:'+resizedFile);
+									} else {
+										try {
+											data = fs.readFileSync(resizedFile); // LATER async
+											response.header('Content-Type', mime.lookup(resizedFile));
+											response.send(data);
+										}
+										catch (e) {
+											response.send(500, 'Could not read resized file');
+										};
+									};
+								});
+							}
 						});
 					} else {
-						response.header('Content-Type', mime.lookup(filePath));
+						response.header('Content-Type', mime.lookup(resizedFile));
 						response.send(data);
 					};
 				});
 			} else {
-				// we have what we need -
-				response.header('Content-Type', mime.lookup(flatPath));
+				// we have what we need
+				response.header('Content-Type', mime.lookup(origFile));
 				response.send(data);
 			};
 		};
@@ -128,88 +123,131 @@ exports.drop = function(request, response){
 	response.render('drop', { title: 'Upload Image(s)', scripts:['zepto.min.js', 'dropzone.js', 'upload.js'], styles: ['upload.css']});
 };
 
-exports.manage = function(request, response){
-	var dataLayer = { bucket: request.params.bucket, id: request.params.id };
-
+exports.manage = function(request, response) {
 	response.render('manage', {
-		title: 'Manage ' + request.params.bucket + "/" + request.params.id,
+		title: 'Manage ' + request.params.bucket,
 		scripts:['dropzone.js', "zepto.min.js", "manage.js"],
 		styles: ['upload.css'],
-		dataLayer: dataLayer
+		dataLayer: { bucket: request.params.bucket }
 	});
 }
 
-exports.upload = function(request, response){
-	var gm = require('gm');
-	var im = gm.subClass({ imageMagick: true });
-	var fs = require('fs');
-	var bucket = request.params.bucket ? request.params.bucket : request.body.bucket;
-	var id = request.params.id ? request.params.id : request.body.id;
 
-	fs.readFile(request.files.file.path, function (err, data) {
-		if (err) {
-			response.send(500, 'Error reading file');
-		}
-		else {
-			var mediaDir = request.app.get('media');
+/**
+ * Handle upload
+ */
+exports.upload = function(request, response) {
+	var gm = require('gm'),
+		im = gm.subClass({ imageMagick: true }),
+		fs = require('fs'),
+		mkdirp = require('mkdirp');
 
-			if (checkPath(mediaDir, bucket, id)) {
-				var origFile = mediaDir + '/' + bucket + '/' + id + '/orig/' + request.files.file.name;
-				var flatFile = mediaDir + '/' + bucket + '/' + id + '/flat/' + request.files.file.name;
+	var bucket = request.params.bucket ? request.params.bucket : request.body.bucket,
+		mediaPath = request.app.get('media'),
+		cachePath = request.app.get('cache'),
+		filename = request.files.file.name,
+		origPath = mediaPath + '/' + bucket,
+		flatPath = cachePath + '/' + bucket,
+		origFile;
 
-				fs.writeFile(origFile, data, function (err) {
-					if (err) {
-						response.send(500, 'Error writing file: ' + origFile);
-					}
-					else {
-						im(origFile)
-							.strip()
-							.write(flatFile, function (err) {
-								if (err) {
-									console.log('image.upload: ' + err);
-									return false;
-								}
-								else {
-									console.log('image.upload: success');
-									response.json({ file: flatFile });
-								};
-							});
-					};
-				});
-			}
-			else {
-				response.send(500, 'Error with file path');
-			};
-		};
-	});
-};
-
-var checkPath = function (mediaDir, bucket, id) {
-	var fs = require('fs');
-
-	return (
-		createDir(mediaDir) &&
-		createDir(mediaDir + '/' + bucket) &&
-		createDir(mediaDir + '/' + bucket + '/' + id) &&
-		createDir(mediaDir + '/' + bucket + '/' + id + '/orig') &&
-		createDir(mediaDir + '/' + bucket + '/' + id + '/flat') &&
-		createDir(mediaDir + '/' + bucket + '/' + id + '/resized'));
-};
-
-var createDir = function (path) {
-	var fs = require('fs');
-
-	try {
-		fs.mkdirSync(path);
+	// Make sure filename is unique. LATER do this async.
+	var tmp = filename,
+		i = 0;
+	while ( fs.existsSync(origPath+'/'+tmp) ) {
+		i++;
+		tmp = i+filename;
+		if ( i == 1000 ) break; // Allow a duplicate after too many attempts
 	}
-	catch (e) {
-		if (e.code != 'EEXIST') {
-			console.log(e);
-			return false;
-		};
-	};
-	return true;
-};
+	filename = tmp;
+
+	mkdirp(origPath, function(err) {
+		if (err && err.code != 'EEXIST') {
+			console.log(err);
+			response.send(500, 'Error creating folder');
+		} else {
+			fs.readFile(request.files.file.path, function(err, data) {
+				if(err) {
+					console.log('Error reading upload');
+					response.send(500, 'Error reading upload');
+				} else {
+					fs.writeFile(origPath + '/' + filename, data, function(err) {
+						if (err) {
+							response.send(500, 'Error writing file');
+							console.log(500, 'Error writing file');
+						} else {
+							makeFlat(filename, origPath, cachePath+'/'+bucket, function(err) {
+								if (err) {
+									console.log(err);
+									response.json(500, err);
+								} else {
+									response.json({ file:  cachePath+ '/' + filename });
+								}
+							});
+
+						}
+					});
+				}
+			});
+		}
+	});
+}
 
 
+/**
+ * Read flattened version of image
+ * Create from original if needed
+ */
+var readFlat = function(filename, origPath, flatPath, callback) {
+	var fs = require('fs');
+	fs.readFile(flatPath+'/'+filename, function(err, data) {
+		if(err) {
+			makeFlat(filename, origPath, flatPath, function(err){
+				if(err) {
+					callback(err);
+				} else {
+					fs.readFile(flatPath+'/'+filename, function(err, data) {
+						callback(err, data);
+					});
+				}
+			});
+		} else {
+			callback(err, data);
+		}
+	});
+}
 
+
+/**
+ * Make flattened version of image
+ */
+var makeFlat = function(filename, sourcePath, destPath, callback) {
+	var gm = require('gm'),
+		im = gm.subClass({ imageMagick: true }),
+		fs = require('fs'),
+		mkdirp = require('mkdirp'),
+		origFile = sourcePath+'/'+filename,
+		flatFile = destPath+'/'+filename;
+
+	mkdirp(destPath, function(err) {
+		if (err && err.code != 'EEXIST') {
+			callback(err);
+		} else {
+			fs.readFile(origFile, function(err, data) {
+				if(err) {
+					callback(err);
+				} else {
+					im(origFile)
+					.strip()
+					.write(flatFile, function (err) {
+						if (err) {
+							console.log('image.upload: ' + err);
+							callback(err);
+						} else {
+							callback();
+						};
+					});
+				}
+			});
+		}
+	});
+}
