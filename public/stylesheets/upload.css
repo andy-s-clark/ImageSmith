@@ -27,7 +27,7 @@
 }
 
 .heading {
-	width: 870px;
+	width: 868px;
 	background-color: #f1f1f1;
 	background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #f7f7f7), color-stop(100%, #f1f1f1));
 	background-image: -webkit-lottoinear-gradient(top, #f7f7f7,#f1f1f1);
@@ -94,3 +94,21 @@ span.tree {
 	font-size: 12px;
 }
 
+.thumbnail {
+	margin: 15px 10px;
+	float: left;
+	width: 400px;
+}
+
+.thumbnail img, .thumbnail input, .thumbnail span {
+	float:left;
+	clear: right;
+}
+
+.thumbnail input, .thumbnail span {
+	margin: 4px 0 0 20px;
+}
+
+.spacer {
+	clear: both;
+}
