@@ -1,2 +1,3 @@
-media/*
-node_modules/*
+cache/
+media/
+node_modules/
