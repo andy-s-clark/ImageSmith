@@ -8,6 +8,7 @@ var routes = require('./routes');
 var image = require('./routes/image');
 var http = require('http');
 var path = require('path');
+var pjax = require('express-pjax');
 var app = express();
 
 // all environments
@@ -24,6 +25,7 @@ app.use(express.logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(express.methodOverride());
+app.use(pjax());
 app.use(app.router);
 app.use(express.static(path.join(__dirname, 'media')));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -41,6 +43,8 @@ app.get('/', routes.index);
 app.get('/images/:bucket([^\*]+)\.json', image.list);
 app.get('/images/:bucket([^\*]+)/:image([^\*]+\.[a-zA-Z0-9]+)', image.get);
 // LATER app.get('/images/:bucket/:id/:width/:height/:image', image.get);
+
+app.get('/images/:bucket/:id\.:format', image.manage);
 
 app.get('/images/:bucket([^\*]+)', image.manage);
 app.post('/images/:bucket([^\*]+)', image.upload);
